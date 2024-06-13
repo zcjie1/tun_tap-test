@@ -11,15 +11,15 @@
 #include <string.h>
 
 /**
- * 创建TUN_DEV设备
+ * 创建TAP_DEV设备
  * 循环从TUN_DEV设备读取数据
  * 输出读取字节数
 */
 
-#define TUN_DEV "test_tun"
+#define TAP_DEV "test_tap"
 #define BUFFER_SIZE 1024
 
-int tun_alloc(char *name, int flags)
+int tap_alloc(char *name, int flags)
 {
 
     struct ifreq ifr;
@@ -35,13 +35,16 @@ int tun_alloc(char *name, int flags)
     strncpy(ifr.ifr_name, name, IFNAMSIZ - 1);
 
     if ((err = ioctl(fd, TUNSETIFF, (void *) &ifr)) < 0) {
+        perror("ioctl error");
         close(fd);
         return err;
     }
 
     // 设置IP地址，并启动TAP设备
-    system("sudo ip addr add 192.168.1.1/24 dev test_tun"); 
-    system("ip link set dev test_tun up");
+    system("sudo ip addr add 192.168.2.1/24 dev test_tap");
+    // system("sudo ip link set dev test_tap master br1");
+    // system("sudo ip link set dev br1 up");
+    system("sudo ip link set dev test_tap up");
 
     printf("Open tun/tap device: %s for reading...\n", ifr.ifr_name);
 
@@ -58,7 +61,7 @@ int main()
      *        IFF_TAP   - TAP device
      *        IFF_NO_PI - Do not provide packet information
      */
-    tun_fd = tun_alloc(TUN_DEV, IFF_TUN | IFF_NO_PI);
+    tun_fd = tap_alloc(TAP_DEV, IFF_TAP | IFF_NO_PI);
 
     if (tun_fd < 0) {
         perror("Allocating interface");
